@@ -1,36 +1,34 @@
-node {
+//Jenkins file only to tutorial example
+pipeline {
+  agent any
     
-	
-
-    env.AWS_ECR_LOGIN=true
-    def newApp
-    def registry = 'JVMatos/jenkins-node-test'
-    def registryCredential = 'dockerhub'
-	
-	stage('Git') {
-		git 'https://github.com/JVMatos/jenkins-node-test'
-	}
-	stage('Build') {
-		sh 'npm install'
-	}
-	stage('Test') {
-		sh 'npm test'
-	}
-	stage('Building image') {
-        docker.withRegistry( 'https://' + registry, registryCredential ) {
-		    def buildName = registry + ":$BUILD_NUMBER"
-			newApp = docker.build buildName
-			newApp.push()
-        }
-	}
-	stage('Registring image') {
-        docker.withRegistry( 'https://' + registry, registryCredential ) {
-    		newApp.push 'latest2'
-        }
-	}
-    stage('Removing image') {
-        sh "docker rmi $registry:$BUILD_NUMBER"
-        sh "docker rmi $registry:latest"
+  tools {nodejs "node"}
+    
+  stages{        
+    stage('Cloning Git'){
+      steps{
+        git 'https://github.com/JVMatos/jenkins-node-test'
+      }
     }
-    
+    stage('Install dependencies'){
+      steps{
+        sh 'npm install'
+      }
+    }
+    stage('Test') {
+      steps {
+        sh 'npm test'
+      }
+    }
+    stage('build'){
+      steps{
+        sh 'npm run build'
+      }
+    }
+    stage('Deliver') { 
+      steps {
+        sh 'npm start'
+      }
+    }
+  }
 }
